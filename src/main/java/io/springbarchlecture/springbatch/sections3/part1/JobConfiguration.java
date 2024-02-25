@@ -1,4 +1,4 @@
-package io.springbarchlecture.springbatch;
+package io.springbarchlecture.springbatch.sections3.part1;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.batch.core.Job;
@@ -12,8 +12,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.transaction.PlatformTransactionManager;
 
 @Configuration
-@RequiredArgsConstructor
-public class DBJobConfiguration {
+public class JobConfiguration {
 
     @Bean
     public Job job(JobRepository jobRepository, Step step1, Step step2) {
@@ -43,4 +42,6 @@ public class DBJobConfiguration {
                 .build();
     }
 
+//    위 코드 전체는 하나의 Job을 구성한 것이다.
+//      Tasklet 은 Step 에 의해 실행되며, Step 은 SimpleJob(Job)에 의해 실행된다.
 }
