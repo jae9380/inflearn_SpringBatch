@@ -1,9 +1,8 @@
-package io.springbarchlecture.springbatch.section4.part2.chap1;
+package io.springbarchlecture.springbatch.section4.part2.chap1.incrementer;
 
 import org.springframework.batch.core.Job;
 import org.springframework.batch.core.Step;
 import org.springframework.batch.core.StepContribution;
-import org.springframework.batch.core.job.DefaultJobParametersValidator;
 import org.springframework.batch.core.job.builder.JobBuilder;
 import org.springframework.batch.core.repository.JobRepository;
 import org.springframework.batch.core.scope.context.ChunkContext;
@@ -15,14 +14,14 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.transaction.PlatformTransactionManager;
 
 @Configuration
-public class preventRestartConfiguration {
+public class IncrementerConfiguration {
 
     @Bean
-    public Job batchJob1(JobRepository jobRepository, Step step1, Step step2) {
-        return new JobBuilder("batchJob1", jobRepository)
+    public Job batchJob(JobRepository jobRepository, Step step1, Step step2) {
+        return new JobBuilder("batchJob", jobRepository)
+                .incrementer(new CustomJobParametersIncrementer())
                 .start(step1)
                 .next(step2)
-                .preventRestart()
                 .build();
     }
 
@@ -32,10 +31,10 @@ public class preventRestartConfiguration {
                 .tasklet(new Tasklet() {
                     @Override
                     public RepeatStatus execute(StepContribution contribution, ChunkContext chunkContext) throws Exception {
-                        System.out.println("step1 was executed");
+                        System.out.println("step1 has executed");
                         return RepeatStatus.FINISHED;
                     }
-                },ptm)
+                }, ptm)
                 .build();
     }
 
@@ -43,19 +42,9 @@ public class preventRestartConfiguration {
     public Step step2(JobRepository jobRepository, PlatformTransactionManager ptm) {
         return new StepBuilder("step2", jobRepository)
                 .tasklet((contribution, chunkContext) -> {
-                    throw new RuntimeException("step2 was failed");
-//                    System.out.println("step2 was executed");
-//                    return RepeatStatus.FINISHED;
-                },ptm)
+                    System.out.println("step2 has executed");
+                    return RepeatStatus.FINISHED;
+                }, ptm)
                 .build();
     }
-//    Ex.1
-//    .preventRestart() 주석 처리와 step2 에서 예외 발생 시
-//    두번째 실행에서 예외 발생 부분 주석 후 진행
-//    실패한 step에 대한 재 실행이 가능
-
-//    Ex.2
-//    첫 실행은 기존과 같이 step2에서 예외 발생
-//    .preventRestart() 주석 해제 후 재 실행 시
-//    예외 발생 ( JobInstance already exists and is not restartable )
 }
