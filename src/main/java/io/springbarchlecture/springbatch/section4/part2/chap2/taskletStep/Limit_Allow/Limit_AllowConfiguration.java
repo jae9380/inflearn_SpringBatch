@@ -34,21 +34,37 @@ public class Limit_AllowConfiguration {
                 .tasklet(new Tasklet() {
                     @Override
                     public RepeatStatus execute(StepContribution contribution, ChunkContext chunkContext) throws Exception {
-                        System.out.println("step1 was executed");
+                        System.out.println("stepContribution = "+ contribution+ "chunkContext = "+chunkContext);
                         return RepeatStatus.FINISHED;
                     }
                 },ptm)
+                .allowStartIfComplete(true)
+                /*
+                 원래는 해당 스탭은 성공했으므로 다음 실행에는 실행되지 않는데, allowStartIfComplete 설정으로
+                 step1은 프로그램 실행 시 성공 여부와 상관없이 항상 실행되도록 설정을 함
+                 */
                 .build();
     }
 
     @Bean
     public Step step2(JobRepository jobRepository, PlatformTransactionManager ptm) {
         return new StepBuilder("step2", jobRepository)
-                .tasklet((contribution, chunkContext) -> {
-                    System.out.println("step2 was executed");
-                    throw new RuntimeException("step2 was failed");
-//                    return RepeatStatus.FINISHED;
+                .tasklet(new Tasklet() {
+                    @Override
+                    public RepeatStatus execute(StepContribution contribution, ChunkContext chunkContext) throws Exception {
+                        System.out.println("StepContribution = "+ contribution+ "ChunkContext = "+chunkContext);
+                        throw new RuntimeException("step2 was failed");
+//                        return RepeatStatus.FINISHED;
+                    }
                 },ptm)
+                .startLimit(3) // 3번째 까지는 실행이 가능, 4번째 부터는 불가능
                 .build();
     }
 }
+/*
+    위 step1 에서의 .allowStartIfComplete(true) 설정과  step2 에서의 .startLimit(3)설정으로
+    step1은 항상 프로그램 실행 시 성공한 이력이 있더라도 항상 실행이 되지만, step2는 3번까지는 실행이 가능하고 그 이상의 실행에서는
+    실행불가능한 스탭이 된다.
+
+    총 4번의 실행을 한다면 step1은 4번까지 실행이 되겠지만, step2는 3번까지만 실행이 된다.
+ */
